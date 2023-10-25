@@ -52,6 +52,10 @@ void FakeDevice::compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
   server_.compute(ds_id, opcode, input_len, input_buf, output_len, output_buf);
 }
 
+uint8_t FakeDevice::allocate_ds_id(){return server_.allocate_ds_id();}
+
+void FakeDevice::free_ds_id(uint8_t ds_id){server_.free_ds_id(ds_id);}
+
 // Request:
 //     |OpCode = Init (1B)|Far Mem Size (8B)|
 // Response:
@@ -175,8 +179,8 @@ void TCPDevice::_allocate_ds_id(tcpconn_t *remote_slave,uint8_t* ds_id){
 // |Ack (1B)|
 void TCPDevice::_free_ds_id(tcpconn_t *remote_slave,uint8_t ds_id){
   uint8_t req[kOpcodeSize+Object::kDSIDSize];
-  __builtin_memcpy(req[0], &kOpFreeDSID, kOpcodeSize);
-  __builtin_memcpy(req[kOpcodeSize], &ds_id, Object::kDSIDSize);
+  __builtin_memcpy(&req[0], &kOpFreeDSID, kOpcodeSize);
+  __builtin_memcpy(&req[kOpcodeSize], &ds_id, Object::kDSIDSize);
   helpers::tcp_write_until(remote_slave, req, sizeof(req));
   uint8_t ack;
   helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));

@@ -12,6 +12,7 @@ extern "C" {
 
 #include "deref_scope.hpp"
 #include "manager.hpp"
+#include "region_manager.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -135,14 +136,14 @@ GenericUniquePtr FarMemManager::allocate_generic_unique_ptr(
   return ptr;
 }
 
-void FarMemManager::RegionManager::push_free_region(Region &region) {
+void RegionManager::push_free_region(Region &region) {
   region_spin_.Lock();
   region.reset();
   BUG_ON(!free_regions_.push_back(region));
   region_spin_.Unlock();
 }
 
-std::optional<Region> FarMemManager::RegionManager::pop_used_region() {
+std::optional<Region> RegionManager::pop_used_region() {
   Region region;
   region_spin_.Lock();
   int retry_times = 0;
@@ -174,7 +175,7 @@ nt_retry:
   return success ? std::make_optional(std::move(region)) : std::nullopt;
 }
 
-bool FarMemManager::RegionManager::try_refill_core_local_free_region(
+bool RegionManager::try_refill_core_local_free_region(
     bool nt, Region *full_region) {
   region_spin_.Lock();
   auto guard = helpers::finally([&] { region_spin_.Unlock(); });
@@ -221,7 +222,7 @@ FarMemManagerFactory::build(uint64_t cache_size,
   return ptr_;
 }
 
-FarMemManager::RegionManager::RegionManager(uint64_t size, bool is_local) {
+RegionManager::RegionManager(uint64_t size, bool is_local) {
   auto free_regions_count = ceil(size / static_cast<double>(Region::kSize));
   if (free_regions_count <= 2 * helpers::kNumSocket1CPUs) {
     LOG_PRINTF("%s\n", "Error: two few available regions.");

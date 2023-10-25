@@ -12,6 +12,8 @@ extern "C" {
 
 #include "deref_scope.hpp"
 #include "remote_manager.hpp"
+#include "internal/ds_info.hpp"
+#include "pointer.hpp"
 
 #include <algorithm>
 #include <cassert>

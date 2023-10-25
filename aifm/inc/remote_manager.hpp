@@ -1,12 +1,15 @@
 #pragma once
 
-#include "manager.hpp"
+#include "region_manager.hpp"
+
+#include <atomic>
+#include <queue>
 
 namespace far_memory {
 
     class RemoteManager {
     private:
-        FarMemManager::RegionManager far_mem_region_manager_;
+        RegionManager far_mem_region_manager_;
         std::queue<uint8_t> available_ds_ids_;   
 
         std::atomic<uint32_t> pending_gcs_{0};

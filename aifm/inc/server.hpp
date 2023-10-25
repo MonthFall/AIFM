@@ -13,7 +13,7 @@ private:
   ServerDSFactory *registered_server_ds_factorys_[kMaxNumDSTypes];
   static std::unique_ptr<ServerDS> server_ds_ptrs_[kMaxNumDSIDs];
 
-  constexpr static uint64_t FarMemSize = 256 * Region::kSize;
+  constexpr static uint64_t FarMemSize =  (1ULL << 33);
   std::unique_ptr<RemoteManager> manager;
 
 public:

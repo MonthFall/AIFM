@@ -39,14 +39,14 @@ namespace far_memory {
         BUG_ON(far_mem_size >= (1ULL << FarMemPtrMeta::kObjectIDBitSize));
         ksched_fd_ = open("/dev/ksched", O_RDWR);
         if (ksched_fd_ < 0) {
-            LOG_PRINTF("%s\n", "Warn: fail to open /dev/ksched.");
-        for (uint8_t ds_id = std::numeric_limits<decltype(available_ds_ids_)::value_type>::min();
-            ds_id <std::numeric_limits<decltype(available_ds_ids_)::value_type>::max();ds_id++) {
-                if (ds_id != kVanillaPtrDSID) {
-                    available_ds_ids_.push(ds_id);
-                }
-            }       
+            LOG_PRINTF("%s\n", "Warn: fail to open /dev/ksched.");   
         }
+        
+        for (uint8_t ds_id = std::numeric_limits<decltype(available_ds_ids_)::value_type>::min(); ds_id < std::numeric_limits<decltype(available_ds_ids_)::value_type>::max(); ds_id++) {
+            if (ds_id != kVanillaPtrDSID) {
+                available_ds_ids_.push(ds_id);
+            }
+        }   
     }
 
     RemoteManager::~RemoteManager(){

@@ -31,7 +31,11 @@ void FakeDevice::read_object(uint8_t ds_id, uint8_t obj_id_len,
 void FakeDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
                               const uint8_t *obj_id, uint16_t data_len,
                               const uint8_t *data_buf) {
-  server_.write_object(ds_id, obj_id_len, obj_id, data_len, data_buf);
+  printf("device writing\n");
+  uint8_t* addr = server_.allocate_object(data_len); 
+  uint8_t addr_len = static_cast<uint8_t>(sizeof(*addr));
+  //server_.write_object(ds_id, obj_id_len, obj_id, data_len, data_buf);
+  server_.write_object(ds_id, addr_len, addr, data_len, data_buf);
 }
 
 bool FakeDevice::remove_object(uint64_t ds_id, uint8_t obj_id_len,

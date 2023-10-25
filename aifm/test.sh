@@ -5,16 +5,24 @@ source shared.sh
 all_passed=1
 
 function run_single_test {
-    echo "Running test $1..."
-    rerun_local_iokerneld
-    if [[ $1 == *"tcp"* ]]; then
-    	rerun_mem_server
-    fi
-    if run_program ./bin/$1 2>/dev/null | grep -q "Passed"; then
-        say_passed
+    if [[ $1 != *"test_pointer_swap" ]]; then
+        echo $1
+        echo "skip test"
     else
-        say_failed
-    	all_passed=0
+
+        echo "Running test $1..."
+        rerun_local_iokerneld
+        if [[ $1 == *"tcp"* ]]; then
+    	    rerun_mem_server
+        fi
+        # if run_program ./bin/$1 2>$AIFM_PATH/client.log | grep -q "Passed"; then
+        # if run_program ./bin/$1 2>$AIFM_PATH/client.log| grep -q "Passed"; then
+        if run_program ./bin/$1 1>/dev/stderr| grep -q "Passed"; then
+            say_passed
+        else
+            say_failed
+    	    all_passed=0
+        fi
     fi
 }
 

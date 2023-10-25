@@ -18,6 +18,8 @@ Server::Server() {
   register_ds(kVanillaPtrDSType, new ServerPtrFactory());
   register_ds(kHashTableDSType, new ServerHashTableFactory());
   register_ds(kDataFrameVectorDSType, new ServerDataFrameVectorFactory());
+
+  manager =  std::unique_ptr<RemoteManager>(new RemoteManager(FarMemSize));
 }
 
 void Server::register_ds(uint8_t ds_type, ServerDSFactory *factory) {
@@ -46,6 +48,11 @@ void Server::read_object(uint8_t ds_id, uint8_t obj_id_len,
   ds_ptr->read_object(obj_id_len, obj_id, data_len, data_buf);
 }
 
+uint8_t* Server::allocate_object(uint16_t data_len){
+  u_int64_t addr = manager->allocate_remote_object(data_len);
+  return reinterpret_cast<u_int8_t *>(&addr);
+}
+
 void Server::write_object(uint8_t ds_id, uint8_t obj_id_len,
                           const uint8_t *obj_id, uint16_t data_len,
                           const uint8_t *data_buf) {
@@ -70,6 +77,14 @@ void Server::compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
                      uint8_t *output_buf) {
   auto ds_ptr = server_ds_ptrs_[ds_id].get();
   return ds_ptr->compute(opcode, input_len, input_buf, output_len, output_buf);
+}
+
+uint8_t Server::allocate_ds_id(){
+  return manager->allocate_ds_id();
+}
+
+void Server::free_ds_id(u_int8_t ds_id){
+  manager->free_ds_id(ds_id);
 }
 
 ServerDS *Server::get_server_ds(uint8_t ds_id) {

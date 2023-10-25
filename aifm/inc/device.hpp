@@ -33,6 +33,8 @@ public:
   virtual void compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
                        const uint8_t *input_buf, uint16_t *output_len,
                        uint8_t *output_buf) = 0;
+  uint8_t allocate_ds_id();
+  void free_ds_id(uint8_t ds_id);
 };
 
 class FakeDevice : public FarMemDevice {
@@ -77,6 +79,8 @@ private:
   void _compute(tcpconn_t *remote_slave, uint8_t ds_id, uint8_t opcode,
                 uint16_t input_len, const uint8_t *input_buf,
                 uint16_t *output_len, uint8_t *output_buf);
+  void _allocate_ds_id(tcpconn_t *remote_slave,uint8_t *ds_id);
+  void _free_ds_id(tcpconn_t *remote_slave,uint8_t ds_id);
 
 public:
   // TCPDevice talks to remote agent via TCP.
@@ -104,6 +108,8 @@ public:
   constexpr static uint8_t kOpConstruct = 5;
   constexpr static uint8_t kOpDeconstruct = 6;
   constexpr static uint8_t kOpCompute = 7;
+  constexpr static uint8_t kOpAllocateDSID = 8;
+  constexpr static uint8_t kOpFreeDSID = 9;
 
   TCPDevice(netaddr raddr, uint32_t num_connections, uint64_t far_mem_size);
   ~TCPDevice();
@@ -118,6 +124,8 @@ public:
   void compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
                const uint8_t *input_buf, uint16_t *output_len,
                uint8_t *output_buf);
+  uint8_t allocate_ds_id();
+  void free_ds_id(uint8_t ds_id);
 };
 
 } // namespace far_memory

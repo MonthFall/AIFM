@@ -44,6 +44,7 @@ private:
 
   uint8_t metadata_[kSize];
   friend class FarMemManager;
+  friend class RemoteManager;
   friend class GenericFarMemPtr;
 
   FarMemPtrMeta();

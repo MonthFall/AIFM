@@ -122,6 +122,49 @@ void process_write_object(tcpconn_t *c) {
 }
 
 // Request:
+// |Opcode = KOpWriteObject (1B)|ds_id(1B)|obj_id_len(1B)|data_len(2B)|
+// |obj_id(obj_id_len B)|data_buf(data_len)|
+// Response:
+// |Ack (1B)|obj_id_len(1B)|obj_id(obj_id_len B)|
+void process_write_object_rt_objectid(tcpconn_t *c) {
+  uint8_t req[Object::kDSIDSize + Object::kIDLenSize + Object::kDataLenSize +
+              Object::kMaxObjectIDSize + Object::kMaxObjectDataSize];
+  uint8_t resp[Object::kIDLenSize+Object::kMaxObjectIDSize];
+
+  helpers::tcp_read_until(
+      c, req, Object::kDSIDSize + Object::kIDLenSize + Object::kDataLenSize);
+
+  auto ds_id = *const_cast<uint8_t *>(&req[0]);
+  auto object_id_len = *const_cast<uint8_t *>(&req[Object::kDSIDSize]);
+  auto data_len = *reinterpret_cast<uint16_t *>(
+      &req[Object::kDSIDSize + Object::kIDLenSize]);
+
+  helpers::tcp_read_until(
+      c, &req[Object::kDSIDSize + Object::kIDLenSize + Object::kDataLenSize],
+      object_id_len + data_len);
+
+  auto *object_id = const_cast<uint8_t *>(
+      &req[Object::kDSIDSize + Object::kIDLenSize + Object::kDataLenSize]);
+  auto *data_buf =
+      const_cast<uint8_t *>(&req[Object::kDSIDSize + Object::kIDLenSize +
+                                 Object::kDataLenSize + object_id_len]);
+  
+  uint8_t* addr = server.allocate_object(data_len); 
+  uint8_t addr_len = static_cast<uint8_t>(sizeof(*addr));
+  printf("obj_id = %d, len = %d\n",*object_id,object_id_len);
+  printf("addr = %d,len = %d\n",*addr,addr_len);
+
+  server.write_object(ds_id, object_id_len, object_id, data_len, data_buf);
+
+  uint8_t ack;
+  helpers::tcp_write_until(c, &ack, sizeof(ack));
+  
+  memcpy(&resp[0],&addr_len,Object::kIDLenSize);
+  memcpy(&resp[Object::kIDLenSize],addr,addr_len);
+  helpers::tcp_write_until(c, &resp, Object::kIDLenSize+addr_len);
+}
+
+// Request:
 // |Opcode = kOpRemoveObject (1B)|ds_id(1B)|obj_id_len(1B)|obj_id(obj_id_len B)|
 // Response:
 // |exists (1B)|
@@ -226,6 +269,36 @@ void process_compute(tcpconn_t *c) {
   helpers::tcp_write_until(c, resp, sizeof(*output_len) + *output_len);
 }
 
+// Request:
+// |Opcode = KOpAllocateDSID(1B) |
+// Response:
+// | ds_id(1B) |
+void process_allocate_ds_id(tcpconn_t *c) {
+  uint8_t resp[Object::kDSIDSize];
+  uint8_t ds_id = server.allocate_ds_id();
+
+  uint8_t ack;
+  helpers::tcp_write_until(c, &ack, sizeof(ack));
+
+  memcpy(&resp[0],&ds_id,Object::kDSIDSize);
+  helpers::tcp_write_until(c, &resp, sizeof(resp));
+}
+
+// Request:
+// |Opcode = KOpFreeDSID(1B) | ds_id(1B) |
+// Response:
+// |Ack (1B)|
+void process_free_ds_id(tcpconn_t *c){
+  uint8_t req[Object::kDSIDSize];
+  helpers::tcp_read_until(c, req, Object::kDSIDSize);
+
+  auto ds_id = *const_cast<uint8_t *>(&req[0]);
+  server.free_ds_id(ds_id);
+
+  uint8_t ack;
+  helpers::tcp_write_until(c, &ack, sizeof(ack));
+}
+
 void slave_fn(tcpconn_t *c) {
   // Run event loop.
   uint8_t opcode;
@@ -237,7 +310,8 @@ void slave_fn(tcpconn_t *c) {
       process_read_object(c);
       break;
     case TCPDevice::kOpWriteObject:
-      process_write_object(c);
+      //process_write_object(c);
+      process_write_object_rt_objectid(c);
       break;
     case TCPDevice::kOpRemoveObject:
       process_remove_object(c);
@@ -249,6 +323,12 @@ void slave_fn(tcpconn_t *c) {
       process_destruct(c);
       break;
     case TCPDevice::kOpCompute:
+      process_compute(c);
+      break;
+    case TCPDevice::kOpAllocateDSID:
+      process_compute(c);
+      break;
+    case TCPDevice::kOpFreeDSID:
       process_compute(c);
       break;
     default:

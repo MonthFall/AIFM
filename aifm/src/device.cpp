@@ -142,6 +142,46 @@ void TCPDevice::compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
   shared_pool_.push(remote_slave);
 }
 
+uint8_t TCPDevice::allocate_ds_id(){
+  auto remote_slave = shared_pool_.pop();
+  u_int8_t *ds_id;
+  _allocate_ds_id(remote_slave,ds_id);
+  shared_pool_.push(remote_slave);
+  return *ds_id;
+}
+
+void TCPDevice::free_ds_id(u_int8_t ds_id){
+  auto remote_slave = shared_pool_.pop();
+  _free_ds_id(remote_slave,ds_id);
+  shared_pool_.push(remote_slave);
+}
+
+// Request:
+// |Opcode = KOpAllocateDSID(1B) |
+// Response:
+// | ds_id(1B) |
+void TCPDevice::_allocate_ds_id(tcpconn_t *remote_slave,uint8_t* ds_id){
+  uint8_t req[kOpcodeSize];
+  __builtin_memcpy(req, &kOpAllocateDSID, kOpcodeSize);
+  helpers::tcp_write_until(remote_slave, req, sizeof(req));
+  uint8_t ack;
+  helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));
+  helpers::tcp_read_until(remote_slave, ds_id, Object::kDSIDSize);
+}
+
+// Request:
+// |Opcode = KOpFreeDSID(1B) | ds_id(1B) |
+// Response:
+// |Ack (1B)|
+void TCPDevice::_free_ds_id(tcpconn_t *remote_slave,uint8_t ds_id){
+  uint8_t req[kOpcodeSize+Object::kDSIDSize];
+  __builtin_memcpy(req[0], &kOpFreeDSID, kOpcodeSize);
+  __builtin_memcpy(req[kOpcodeSize], &ds_id, Object::kDSIDSize);
+  helpers::tcp_write_until(remote_slave, req, sizeof(req));
+  uint8_t ack;
+  helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));
+}
+
 // Request:
 // |Opcode = KOpReadObject(1B) | ds_id(1B) | obj_id_len(1B) | obj_id |
 // Response:
@@ -214,6 +254,14 @@ void TCPDevice::_write_object(tcpconn_t *remote_slave, uint8_t ds_id,
 
   uint8_t ack;
   helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));
+
+  uint8_t* addr_len;
+  uint8_t* addr;
+  helpers::tcp_read_until(remote_slave, addr_len, Object::kIDLenSize);
+  if (addr_len) {
+    helpers::tcp_read_until(remote_slave, addr, *addr_len);
+    printf("addr = %d,   len = %d\n",*addr,*addr_len);
+  }
 
   Stats::finish_measure_write_object_cycles();
 }

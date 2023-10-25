@@ -112,6 +112,7 @@ private:
   friend class DerefScope;
   friend class GenericDataFrameVector;
   friend class GenericConcurrentHopscotch;
+  friend class RemoteManager;
   template <typename T> friend class DataFrameVector;
 
   FarMemManager(uint64_t cache_size, uint64_t far_mem_size,

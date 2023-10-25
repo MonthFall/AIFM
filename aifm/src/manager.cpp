@@ -99,7 +99,8 @@ bool FarMemManager::allocate_generic_unique_ptr_nb(
   auto local_object_addr = *optional_local_object_addr;
   ptr->init(local_object_addr);
   if (!optional_id_len) {
-    auto remote_object_addr = allocate_remote_object(false, object_size);
+    // auto remote_object_addr = allocate_remote_object(false, object_size);
+    auto remote_object_addr = local_object_addr;
     Object(local_object_addr, ds_id, static_cast<uint16_t>(item_size),
            static_cast<uint8_t>(sizeof(remote_object_addr)),
            reinterpret_cast<const uint8_t *>(&remote_object_addr));
@@ -121,7 +122,8 @@ GenericUniquePtr FarMemManager::allocate_generic_unique_ptr(
   auto local_object_addr = allocate_local_object(false, object_size);
   auto ptr = GenericUniquePtr(local_object_addr);
   if (!optional_id_len) {
-    auto remote_object_addr = allocate_remote_object(false, object_size);
+    // auto remote_object_addr = allocate_remote_object(false, object_size);
+    auto remote_object_addr = local_object_addr;
     Object(local_object_addr, ds_id, static_cast<uint16_t>(item_size),
            static_cast<uint8_t>(sizeof(remote_object_addr)),
            reinterpret_cast<const uint8_t *>(&remote_object_addr));
@@ -771,12 +773,16 @@ void FarMemManager::launch_gc_master() {
 }
 
 uint8_t FarMemManager::allocate_ds_id() {
-  auto ds_id = available_ds_ids_.front();
-  available_ds_ids_.pop();
+  // auto ds_id = available_ds_ids_.front();
+  // available_ds_ids_.pop();
+  auto ds_id = device_ptr_->allocate_ds_id();
   return ds_id;
 }
 
-void FarMemManager::free_ds_id(uint8_t ds_id) { available_ds_ids_.push(ds_id); }
+void FarMemManager::free_ds_id(uint8_t ds_id) { 
+  // available_ds_ids_.push(ds_id); 
+  device_ptr_->free_ds_id(ds_id);
+}
 
 bool FarMemManager::reallocate_generic_unique_ptr_nb(const DerefScope &scope,
                                                      GenericUniquePtr *ptr,
@@ -799,7 +805,8 @@ bool FarMemManager::reallocate_generic_unique_ptr_nb(const DerefScope &scope,
   wmb();
   ptr->init(local_object_addr);
   if (old_obj_ds_id == kVanillaPtrDSID) {
-    auto remote_object_addr = allocate_remote_object(false, new_obj_size);
+    // auto remote_object_addr = allocate_remote_object(false, new_obj_size);
+    auto remote_object_addr = local_object_addr;
     assert(old_obj_id_len == kVanillaPtrObjectIDSize);
     Object(local_object_addr, old_obj_ds_id,
            static_cast<uint16_t>(new_item_size), kVanillaPtrObjectIDSize,

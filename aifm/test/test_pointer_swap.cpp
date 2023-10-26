@@ -15,18 +15,18 @@ extern "C" {
 using namespace far_memory;
 using namespace std;
 
-constexpr uint64_t kCacheSize = 256 * Region::kSize;
+constexpr uint64_t kCacheSize = 256 * Region::kSize;  //1<<28
 constexpr uint64_t kFarMemSize = (1ULL << 33); // 8 GB.
-constexpr uint64_t kWorkSetSize = 1 << 30;
+constexpr uint64_t kWorkSetSize = 1 << 27;
 constexpr uint64_t kNumGCThreads = 12;
 
 struct Data4096 {
-  char data[4096];
+  char data[Object::kMaxObjectDataSize];
 };
 
 using Data_t = struct Data4096;
 
-constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t);
+constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t)+1200;
 
 void do_work(FarMemManager *manager) {
   std::vector<UniquePtr<Data_t>> vec;
@@ -46,8 +46,10 @@ void do_work(FarMemManager *manager) {
     {
       DerefScope scope;
       const auto raw_const_ptr = vec[i].deref(scope);
+      cout<< raw_const_ptr->data[2000] <<"  ; "<< i <<"  ;"<< endl;
       for (uint32_t j = 0; j < sizeof(Data_t); j++) {
         if (raw_const_ptr->data[j] != static_cast<char>(i)) {
+          printf("!=   ");
           goto fail;
         }
       }

@@ -260,6 +260,7 @@ void FarMemManager::swap_in(bool nt, GenericFarMemPtr *ptr) {
 
   auto &meta = ptr->meta();
   auto obj_id = meta.get_object_id();
+  printf("start swap in, obj_id = %d\n",obj_id);
   rmb();
   if (unlikely(meta.is_present())) {
     return;
@@ -353,10 +354,16 @@ void FarMemManager::swap_out(GenericFarMemPtr *ptr, Object obj) {
   auto obj_size = obj.size();
   auto ds_id = obj.get_ds_id();
   auto data_ptr = reinterpret_cast<const uint8_t *>(obj.get_data_addr());
+  u_int64_t addr =*reinterpret_cast<const uint64_t *>(obj_id);
 
   auto write_object_fn = [&](uint32_t data_len) {
     if (dirty) {
-      device_ptr_->write_object(ds_id, obj_id_len, obj_id, data_len, data_ptr);
+      // printf("before swap, addr = %d   ", addr);
+      addr = device_ptr_->write_object(ds_id, obj_id_len, obj_id, data_len, data_ptr);
+      // printf("after swap, addr = %d \n", addr);
+      // uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
+      // obj.set_obj_id(addr_ptr,addr_len);
+      // obj_id = obj.get_obj_id();
     }
   };
 
@@ -369,14 +376,16 @@ void FarMemManager::swap_out(GenericFarMemPtr *ptr, Object obj) {
   }
 
   if (!meta.is_shared()) {
-    meta.gc_wb(ds_id, obj_size, *reinterpret_cast<const uint64_t *>(obj_id));
+    // meta.gc_wb(ds_id, obj_size, *reinterpret_cast<const uint64_t *>(obj_id));
+    meta.gc_wb(ds_id, obj_size, addr);
   } else {
     reinterpret_cast<GenericSharedPtr *>(ptr)->traverse(
         [=](GenericFarMemPtr *ptr) {
-          ptr->meta().gc_wb(ds_id, obj_size,
-                            *reinterpret_cast<const uint64_t *>(obj_id));
+          // ptr->meta().gc_wb(ds_id, obj_size,*reinterpret_cast<const uint64_t *>(obj_id));
+          ptr->meta().gc_wb(ds_id, obj_size,addr);      
         });
   }
+  printf("meta.obj_id= %d\n",ptr->meta().get_object_id());
 }
 
 /*

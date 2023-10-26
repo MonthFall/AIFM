@@ -22,7 +22,7 @@ public:
   virtual void read_object(uint8_t ds_id, uint8_t obj_id_len,
                            const uint8_t *obj_id, uint16_t *data_len,
                            uint8_t *data_buf) = 0;
-  virtual void write_object(uint8_t ds_id, uint8_t obj_id_len,
+  virtual uint64_t write_object(uint8_t ds_id, uint8_t obj_id_len,
                             const uint8_t *obj_id, uint16_t data_len,
                             const uint8_t *data_buf) = 0;
   virtual bool remove_object(uint64_t ds_id, uint8_t obj_id_len,
@@ -41,13 +41,14 @@ class FakeDevice : public FarMemDevice {
 private:
   constexpr static uint32_t kPrefetchWinSize = 1 << 20;
   Server server_;
+  // int signal = 0;
 
 public:
   FakeDevice(uint64_t far_mem_size);
   ~FakeDevice();
   void read_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                    uint16_t *data_len, uint8_t *data_buf);
-  void write_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
+  uint64_t write_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                     uint16_t data_len, const uint8_t *data_buf);
   bool remove_object(uint64_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id);
   void construct(uint8_t ds_type, uint8_t ds_id, uint8_t param_len,
@@ -70,7 +71,7 @@ private:
   void _read_object(tcpconn_t *remote_slave, uint8_t ds_id, uint8_t obj_id_len,
                     const uint8_t *obj_id, uint16_t *data_len,
                     uint8_t *data_buf);
-  void _write_object(tcpconn_t *remote_slave, uint8_t ds_id, uint8_t obj_id_len,
+  uint64_t _write_object(tcpconn_t *remote_slave, uint8_t ds_id, uint8_t obj_id_len,
                      const uint8_t *obj_id, uint16_t data_len,
                      const uint8_t *data_buf);
   bool _remove_object(tcpconn_t *remote_slave, uint64_t ds_id,
@@ -117,7 +118,7 @@ public:
   ~TCPDevice();
   void read_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                    uint16_t *data_len, uint8_t *data_buf);
-  void write_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
+  uint64_t write_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                     uint16_t data_len, const uint8_t *data_buf);
   bool remove_object(uint64_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id);
   void construct(uint8_t ds_type, uint8_t ds_id, uint8_t param_len,

@@ -59,7 +59,6 @@ void Server::write_object(uint8_t ds_id, uint8_t obj_id_len,
   if (!ds_ptr) {
     ds_ptr = server_ds_ptrs_[kVanillaPtrDSID].get();
   }
-  printf("start writting ptr\n");
   ds_ptr->write_object(obj_id_len, obj_id, data_len, data_buf);
 }
 

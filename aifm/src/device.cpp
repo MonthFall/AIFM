@@ -28,15 +28,18 @@ void FakeDevice::read_object(uint8_t ds_id, uint8_t obj_id_len,
   server_.read_object(ds_id, obj_id_len, obj_id, data_len, data_buf);
 }
 
-void FakeDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
+uint64_t FakeDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
                               const uint8_t *obj_id, uint16_t data_len,
                               const uint8_t *data_buf) {
-
+  // while (signal != 0){}
+  // signal = 1;
   uint64_t addr = server_.allocate_object(data_len); 
+  // signal = 0;
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   auto *addr_ptr = reinterpret_cast<const uint8_t *> (&addr);
   //server_.write_object(ds_id, obj_id_len, obj_id, data_len, data_buf);
   server_.write_object(ds_id, addr_len, addr_ptr, data_len, data_buf);
+  return addr;
 }
 
 bool FakeDevice::remove_object(uint64_t ds_id, uint8_t obj_id_len,
@@ -112,12 +115,13 @@ void TCPDevice::read_object(uint8_t ds_id, uint8_t obj_id_len,
   shared_pool_.push(remote_slave);
 }
 
-void TCPDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
+uint64_t TCPDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
                              const uint8_t *obj_id, uint16_t data_len,
                              const uint8_t *data_buf) {
   auto remote_slave = shared_pool_.pop();
-  _write_object(remote_slave, ds_id, obj_id_len, obj_id, data_len, data_buf);
+  uint64_t object_id =  _write_object(remote_slave, ds_id, obj_id_len, obj_id, data_len, data_buf);
   shared_pool_.push(remote_slave);
+  return object_id;
 }
 
 bool TCPDevice::remove_object(uint64_t ds_id, uint8_t obj_id_len,
@@ -227,7 +231,7 @@ void TCPDevice::_read_object(tcpconn_t *remote_slave, uint8_t ds_id,
 // |obj_id(obj_id_len B)|data_buf(data_len)|
 // Response:
 // |Ack (1B)|
-void TCPDevice::_write_object(tcpconn_t *remote_slave, uint8_t ds_id,
+uint64_t TCPDevice::_write_object(tcpconn_t *remote_slave, uint8_t ds_id,
                               uint8_t obj_id_len, const uint8_t *obj_id,
                               uint16_t data_len, const uint8_t *data_buf) {
   Stats::start_measure_write_object_cycles();
@@ -264,15 +268,19 @@ void TCPDevice::_write_object(tcpconn_t *remote_slave, uint8_t ds_id,
   uint8_t ack;
   helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));
 
-  uint8_t* addr_len;
-  uint8_t* addr;
-  helpers::tcp_read_until(remote_slave, addr_len, Object::kIDLenSize);
+  uint8_t resp[Object::kIDLenSize+Object::kMaxObjectIDSize];
+  helpers::tcp_read_until(remote_slave, resp, Object::kIDLenSize);
+  auto addr_len = *const_cast<uint8_t *>(&req[Object::kDSIDSize]);
+  uint64_t addr;
   if (addr_len) {
-    helpers::tcp_read_until(remote_slave, addr, *addr_len);
-    printf("addr = %d,   len = %d\n",*addr,*addr_len);
+    helpers::tcp_read_until(remote_slave, &resp[Object::kIDLenSize], addr_len);
+    auto *addr_ptr = const_cast<uint8_t *>(&resp[Object::kIDLenSize]);
+    addr = *(reinterpret_cast<uint64_t *>(addr_ptr));
+    printf("addr = %d,   len = %d\n",addr,addr_len);
   }
 
   Stats::finish_measure_write_object_cycles();
+  return addr;
 }
 
 // Request:

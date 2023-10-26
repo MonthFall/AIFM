@@ -149,18 +149,20 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
       const_cast<uint8_t *>(&req[Object::kDSIDSize + Object::kIDLenSize +
                                  Object::kDataLenSize + object_id_len]);
   
-  uint8_t* addr = server.allocate_object(data_len); 
-  uint8_t addr_len = static_cast<uint8_t>(sizeof(*addr));
+  uint64_t addr = server.allocate_object(data_len); 
+  uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   printf("obj_id = %d, len = %d\n",*object_id,object_id_len);
-  printf("addr = %d,len = %d\n",*addr,addr_len);
+  printf("addr = %d,len = %d\n",addr,addr_len);
 
-  server.write_object(ds_id, object_id_len, object_id, data_len, data_buf);
+  // server.write_object(ds_id, object_id_len, object_id, data_len, data_buf);
+  auto *addr_ptr = reinterpret_cast<const uint8_t *>(&addr);
+  server.write_object(ds_id, addr_len, addr_ptr, data_len, data_buf);
 
   uint8_t ack;
   helpers::tcp_write_until(c, &ack, sizeof(ack));
   
   memcpy(&resp[0],&addr_len,Object::kIDLenSize);
-  memcpy(&resp[Object::kIDLenSize],addr,addr_len);
+  memcpy(&resp[Object::kIDLenSize],&addr,addr_len);
   helpers::tcp_write_until(c, &resp, Object::kIDLenSize+addr_len);
 }
 

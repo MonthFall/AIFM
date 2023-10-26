@@ -48,9 +48,8 @@ void Server::read_object(uint8_t ds_id, uint8_t obj_id_len,
   ds_ptr->read_object(obj_id_len, obj_id, data_len, data_buf);
 }
 
-uint8_t* Server::allocate_object(uint16_t data_len){
-  u_int64_t addr = manager->allocate_remote_object(data_len);
-  return reinterpret_cast<u_int8_t *>(&addr);
+uint64_t Server::allocate_object(uint16_t data_len){
+  return manager->allocate_remote_object(data_len);
 }
 
 void Server::write_object(uint8_t ds_id, uint8_t obj_id_len,
@@ -60,6 +59,7 @@ void Server::write_object(uint8_t ds_id, uint8_t obj_id_len,
   if (!ds_ptr) {
     ds_ptr = server_ds_ptrs_[kVanillaPtrDSID].get();
   }
+  printf("start writting ptr\n");
   ds_ptr->write_object(obj_id_len, obj_id, data_len, data_buf);
 }
 

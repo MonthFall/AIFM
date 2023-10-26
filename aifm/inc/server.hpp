@@ -24,7 +24,7 @@ public:
   void destruct(uint8_t ds_id);
   void read_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                    uint16_t *data_len, uint8_t *data_buf);
-  uint8_t* allocate_object(uint16_t data_len);
+  uint64_t allocate_object(uint16_t data_len);
   void write_object(uint8_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id,
                     uint16_t data_len, const uint8_t *data_buf);
   bool remove_object(uint64_t ds_id, uint8_t obj_id_len, const uint8_t *obj_id);

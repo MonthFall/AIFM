@@ -6,7 +6,7 @@ all_passed=1
 
 function run_single_test {
     if [[ $1 != *"test_pointer_swap" ]]; then
-        echo $1
+        # echo $1
         echo "skip test"
     else
 

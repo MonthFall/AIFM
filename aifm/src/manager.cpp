@@ -260,7 +260,7 @@ void FarMemManager::swap_in(bool nt, GenericFarMemPtr *ptr) {
 
   auto &meta = ptr->meta();
   auto obj_id = meta.get_object_id();
-  printf("start swap in, obj_id = %d\n",obj_id);
+  printf("start swap in, obj_id = %d\n",obj_id); //---------------
   rmb();
   if (unlikely(meta.is_present())) {
     return;
@@ -292,6 +292,11 @@ void FarMemManager::swap_in(bool nt, GenericFarMemPtr *ptr) {
           [=](GenericFarMemPtr *ptr) { ptr->meta().set_present(obj_addr); });
     }
     Region::atomic_inc_ref_cnt(obj_addr, -1);
+    const uint32_t *data_ptr = reinterpret_cast<const uint32_t *>(obj_addr);
+    for(int i =2336 ;i<2352;i++){
+      printf("data = %d ",*(data_ptr+i));
+    }
+    printf("\n");
   }
 }
 
@@ -361,9 +366,11 @@ void FarMemManager::swap_out(GenericFarMemPtr *ptr, Object obj) {
       // printf("before swap, addr = %d   ", addr);
       addr = device_ptr_->write_object(ds_id, obj_id_len, obj_id, data_len, data_ptr);
       // printf("after swap, addr = %d \n", addr);
-      // uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
-      // obj.set_obj_id(addr_ptr,addr_len);
-      // obj_id = obj.get_obj_id();
+      auto int_ptr = reinterpret_cast<const uint32_t *>(obj.get_data_addr());
+      for(int i =2336 ;i<2352;i++){
+        printf("data = %d ",*(int_ptr+i));
+      }
+      printf("\n");
     }
   };
 

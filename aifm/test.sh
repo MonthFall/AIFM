@@ -5,7 +5,7 @@ source shared.sh
 all_passed=1
 
 function run_single_test {
-    if [[ $1 != *"test_pointer_swap" ]]; then
+    if [[ $1 != *"test"* ]]; then
         # echo $1
         echo "skip test"
     else
@@ -16,8 +16,9 @@ function run_single_test {
     	    rerun_mem_server
         fi
         # if run_program ./bin/$1 2>$AIFM_PATH/client.log | grep -q "Passed"; then
-        # if run_program ./bin/$1 2>$AIFM_PATH/client.log| grep -q "Passed"; then
-        if run_program ./bin/$1 1>/dev/stderr| grep -q "Passed"; then
+        if run_program ./bin/$1 1>$AIFM_PATH/$1.log| grep -q "Passed"; then
+        #if run_program ./bin/$1 2>/dev/null| grep -q "Passed"; then
+        #if run_program ./bin/$1 1>/dev/stderr| grep -q "Passed"; then
             say_passed
         else
             say_failed

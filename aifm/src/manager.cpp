@@ -292,9 +292,9 @@ void FarMemManager::swap_in(bool nt, GenericFarMemPtr *ptr) {
           [=](GenericFarMemPtr *ptr) { ptr->meta().set_present(obj_addr); });
     }
     Region::atomic_inc_ref_cnt(obj_addr, -1);
-    const uint32_t *data_ptr = reinterpret_cast<const uint32_t *>(obj_addr);
-    for(int i =2336 ;i<2352;i++){
-      printf("data = %d ",*(data_ptr+i));
+    const uint32_t *data_ptr = reinterpret_cast<const uint32_t *>(obj.get_data_addr());
+    for(int i =0 ;i<11;i++){
+      printf("data = %u ",*(data_ptr+i));
     }
     printf("\n");
   }
@@ -367,8 +367,8 @@ void FarMemManager::swap_out(GenericFarMemPtr *ptr, Object obj) {
       addr = device_ptr_->write_object(ds_id, obj_id_len, obj_id, data_len, data_ptr);
       // printf("after swap, addr = %d \n", addr);
       auto int_ptr = reinterpret_cast<const uint32_t *>(obj.get_data_addr());
-      for(int i =2336 ;i<2352;i++){
-        printf("data = %d ",*(int_ptr+i));
+      for(int i =0 ;i<11;i++){
+        printf("data = %u ",*(int_ptr+i));
       }
       printf("\n");
     }

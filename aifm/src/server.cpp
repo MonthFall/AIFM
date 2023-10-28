@@ -31,6 +31,7 @@ void Server::construct(uint8_t ds_type, uint8_t ds_id, uint8_t param_len,
   auto factory = registered_server_ds_factorys_[ds_type];
   BUG_ON(server_ds_ptrs_[ds_id]);
   server_ds_ptrs_[ds_id].reset(factory->build(param_len, params));
+  printf("ds_id = %d added\n",ds_id);
 }
 
 void Server::destruct(uint8_t ds_id) {

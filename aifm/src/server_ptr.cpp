@@ -21,13 +21,12 @@ ServerPtr::~ServerPtr() {}
 
 void ServerPtr::read_object(uint8_t obj_id_len, const uint8_t *obj_id,
                             uint16_t *data_len, uint8_t *data_buf) {
-  printf("reading ,addr = %d\n",*reinterpret_cast<const uint64_t *>(obj_id));
   const uint64_t &object_id = *(reinterpret_cast<const uint64_t *>(obj_id));
   assert(obj_id_len == sizeof(decltype(object_id)));
   auto remote_object_addr = reinterpret_cast<uint64_t>(buf_.get()) + object_id;
   Object remote_object(remote_object_addr);
   *data_len = remote_object.get_data_len();
-  printf("readinging ,addr = %d\n",*reinterpret_cast<const uint64_t *>(obj_id));
+  // printf("readinging ,addr = %d\n",*reinterpret_cast<const uint64_t *>(obj_id));
   memcpy(data_buf, reinterpret_cast<uint8_t *>(remote_object.get_data_addr()),
          *data_len);
 }

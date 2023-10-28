@@ -28,7 +28,7 @@ struct Data4096 {
 
 using Data_t = struct Data4096;
 
-constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t)+793;
+constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t)+810;
 
 void do_work(FarMemManager *manager) {
   std::vector<UniquePtr<Data_t>> vec;
@@ -41,8 +41,8 @@ void do_work(FarMemManager *manager) {
       auto raw_mut_ptr = far_mem_ptr.deref_mut(scope);
       // memset(raw_mut_ptr->data, static_cast<char>(i), sizeof(Data_t));
       // memset(raw_mut_ptr->data, i, sizeof(Data_t));
-      for(int j =0;j<Object::kMaxObjectDataSize/4;j++){raw_mut_ptr->data[j]=i;};
-      printf("%d th value:%d\n",i,raw_mut_ptr->data[i]);
+      for(int j =0;j<Object::kMaxObjectDataSize/4;j++){raw_mut_ptr->data[j]=i;}
+      printf("%u th value:%u\n",i,raw_mut_ptr->data[0]);
     }
     vec.emplace_back(std::move(far_mem_ptr));
   }
@@ -55,7 +55,7 @@ void do_work(FarMemManager *manager) {
       for (uint32_t j = 0; j < sizeof(Data_t)/4; j++) {
         // if (raw_const_ptr->data[j] != static_cast<char>(i)) {
         if (raw_const_ptr->data[j] != i){
-          printf("%d=  %d",raw_const_ptr->data[j],i);
+          printf("%u  !=  %u",raw_const_ptr->data[j],i);
           goto fail;
         }
       }

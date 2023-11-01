@@ -31,10 +31,8 @@ void FakeDevice::read_object(uint8_t ds_id, uint8_t obj_id_len,
 uint64_t FakeDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
                               const uint8_t *obj_id, uint16_t data_len,
                               const uint8_t *data_buf) {
-  // while (signal != 0){}
-  // signal = 1;
-  uint64_t addr = server_.allocate_object(data_len); 
-  // signal = 0;
+  uint16_t object_size = Object::kHeaderSize+data_len+kVanillaPtrObjectIDSize;
+  uint64_t addr = server_.allocate_object(object_size); 
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   auto *addr_ptr = reinterpret_cast<const uint8_t *> (&addr);
   //server_.write_object(ds_id, obj_id_len, obj_id, data_len, data_buf);

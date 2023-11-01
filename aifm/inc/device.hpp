@@ -41,7 +41,6 @@ class FakeDevice : public FarMemDevice {
 private:
   constexpr static uint32_t kPrefetchWinSize = 1 << 20;
   Server server_;
-  // int signal = 0;
 
 public:
   FakeDevice(uint64_t far_mem_size);

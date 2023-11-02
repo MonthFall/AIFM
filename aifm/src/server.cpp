@@ -19,7 +19,11 @@ Server::Server() {
   register_ds(kHashTableDSType, new ServerHashTableFactory());
   register_ds(kDataFrameVectorDSType, new ServerDataFrameVectorFactory());
 
-  manager =  std::unique_ptr<RemoteManager>(new RemoteManager(FarMemSize));
+  // manager =  std::unique_ptr<RemoteManager>(new RemoteManager(FarMemSize));
+}
+
+void Server::set_up_manager(u_int64_t size){
+  manager =  std::unique_ptr<RemoteManager>(new RemoteManager(size));
 }
 
 void Server::register_ds(uint8_t ds_type, ServerDSFactory *factory) {

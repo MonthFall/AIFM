@@ -149,7 +149,8 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
       const_cast<uint8_t *>(&req[Object::kDSIDSize + Object::kIDLenSize +
                                  Object::kDataLenSize + object_id_len]);
   
-  uint64_t addr = server.allocate_object(data_len); 
+  uint16_t object_len =  Object::kHeaderSize + data_len + kVanillaPtrObjectIDSize;
+  uint64_t addr = server.allocate_object(object_len); 
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   printf("obj_id = %d, len = %d\n",*object_id,object_id_len);
   printf("addr = %d,len = %d\n",addr,addr_len);

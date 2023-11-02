@@ -13,11 +13,12 @@ private:
   ServerDSFactory *registered_server_ds_factorys_[kMaxNumDSTypes];
   static std::unique_ptr<ServerDS> server_ds_ptrs_[kMaxNumDSIDs];
 
-  constexpr static uint64_t FarMemSize =  (1ULL << 33);
+  uint64_t FarMemSize =  (1ULL << 33);
   std::unique_ptr<RemoteManager> manager;
 
 public:
   Server();
+  void set_up_manager(uint64_t size);
   void register_ds(uint8_t ds_type, ServerDSFactory *factory);
   void construct(uint8_t ds_type, uint8_t ds_id, uint8_t param_len,
                  uint8_t *params);

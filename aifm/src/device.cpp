@@ -16,6 +16,8 @@ FarMemDevice::FarMemDevice(uint64_t far_mem_size, uint32_t prefetch_win_size)
 
 FakeDevice::FakeDevice(uint64_t far_mem_size)
     : FarMemDevice(far_mem_size, kPrefetchWinSize), server_() {
+  server_.set_up_manager(far_mem_size);
+  
   server_.construct(kVanillaPtrDSType, kVanillaPtrDSID, sizeof(far_mem_size),
                     reinterpret_cast<uint8_t *>(&far_mem_size));
 }

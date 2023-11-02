@@ -11,51 +11,43 @@ extern "C" {
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <unistd.h>
 
 using namespace far_memory;
 using namespace std;
 
-constexpr uint64_t kCacheSize = 256 * Region::kSize;  //1<<28
+constexpr uint64_t kCacheSize = 256 * Region::kSize;
 constexpr uint64_t kFarMemSize = (1ULL << 33); // 8 GB.
-constexpr uint64_t kWorkSetSize = 1 << 27;
-constexpr uint64_t kNumGCThreads = 1;
+constexpr uint64_t kWorkSetSize = 1 << 30;
+constexpr uint64_t kNumGCThreads = 12;
 
 struct Data4096 {
-  // char data[Object::kMaxObjectDataSize];
-  uint32_t data[(Object::kMaxObjectDataSize/4)];
+  char data[4096];
 };
 
 using Data_t = struct Data4096;
 
-constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t)+810;
+constexpr uint64_t kNumEntries = kWorkSetSize / sizeof(Data_t);
 
 void do_work(FarMemManager *manager) {
   std::vector<UniquePtr<Data_t>> vec;
   cout << "Running " << __FILE__ "..." << endl;
 
-  for (uint32_t i = 0; i < kNumEntries; i++) {
+  for (uint64_t i = 0; i < kNumEntries; i++) {
     auto far_mem_ptr = manager->allocate_unique_ptr<Data_t>();
     {
       DerefScope scope;
       auto raw_mut_ptr = far_mem_ptr.deref_mut(scope);
-      // memset(raw_mut_ptr->data, static_cast<char>(i), sizeof(Data_t));
-      // memset(raw_mut_ptr->data, i, sizeof(Data_t));
-      for(int j =0;j<Object::kMaxObjectDataSize/4;j++){raw_mut_ptr->data[j]=i;}
-      printf("%u th value:%u\n",i,raw_mut_ptr->data[0]);
+      memset(raw_mut_ptr->data, static_cast<char>(i), sizeof(Data_t));
     }
     vec.emplace_back(std::move(far_mem_ptr));
   }
 
-  for (uint32_t i = 0; i < kNumEntries; i++) {
+  for (uint64_t i = 0; i < kNumEntries; i++) {
     {
-      usleep(10);
       DerefScope scope;
       const auto raw_const_ptr = vec[i].deref(scope);
-      for (uint32_t j = 0; j < sizeof(Data_t)/4; j++) {
-        // if (raw_const_ptr->data[j] != static_cast<char>(i)) {
-        if (raw_const_ptr->data[j] != i){
-          printf("%u  !=  %u",raw_const_ptr->data[j],i);
+      for (uint32_t j = 0; j < sizeof(Data_t); j++) {
+        if (raw_const_ptr->data[j] != static_cast<char>(i)) {
           goto fail;
         }
       }

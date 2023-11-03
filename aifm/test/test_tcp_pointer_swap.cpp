@@ -42,12 +42,15 @@ void do_work(FarMemManager *manager) {
     vec.emplace_back(std::move(far_mem_ptr));
   }
 
+  printf("setup finished\n");
+
   for (uint64_t i = 0; i < kNumEntries; i++) {
     {
       DerefScope scope;
       const auto raw_const_ptr = vec[i].deref(scope);
       for (uint32_t j = 0; j < sizeof(Data_t); j++) {
         if (raw_const_ptr->data[j] != static_cast<char>(i)) {
+          printf("now is %lu,left: %c,right:%c\n",i,raw_const_ptr->data[j],static_cast<char>(i));
           goto fail;
         }
       }

@@ -27,8 +27,8 @@ std::unique_ptr<uint8_t> far_mem;
 
 std::atomic<bool> has_shutdown{true};
 
-std::atomic<int> alloc_done_int=0;
 std::atomic<int> alloc_occupied_int=0;
+std::atomic_flag alloc_occupied = ATOMIC_FLAG_INIT;
 std::atomic<int> req_ready_int=0;
 std::atomic<uint16_t> requested_size_uint16=0;
 std::atomic<uint64_t> allocated_addr_uint64=0;
@@ -41,31 +41,35 @@ rt::Thread master_thread;
 rt::Thread alloc_thread;
 Server server;
 
-std::vector<rt::Thread> alloc_threads[kMaxNumDSIDs];
+// std::vector<rt::Thread> alloc_threads[kMaxNumDSIDs];
 
 uint64_t alloc_fn(uint16_t object_size){
-  // start 
-  while(alloc_occupied_int.load()){
+  // ----------------- allocate start -------------------------- //
+  // while(alloc_occupied_int.compare_exchange_strong(expected,desired)){
+  while(alloc_occupied.test_and_set()){
     // check is there any thread is using the allocator
     // alloc_occupied_int == 1 means: allocator is occupied
     // if alloc_occupied_int == 0 means: the allocator is free
+    thread_yield();
   }
-  alloc_occupied_int.store(1); // set allocator occupied
+  // alloc_occupied_int.store(1); // set allocator occupied
 
   // --------------------------- area ------------------- //
   requested_size_uint16.store(object_size);
-  alloc_done_int.store(0);  
+  // alloc_done_int.store(0);  
   req_ready_int.store(1);
   
-  while(!alloc_done_int.load()){
+  while(req_ready_int.load()){
     // check is my allocation finished
     // alloc_done_int == 1 means: allocation finished
     // alloc_done_int == 0 means: allocation doing
+    // thread_yield();
   }
   uint64_t addr = allocated_addr_uint64.load();
-
   // --------------------------- area ------------------- //
-  alloc_occupied_int.store(0); // release allocator
+  // alloc_occupied_int.store(0); // release allocator
+  alloc_occupied.clear();
+  // ----------------- allocate end -------------------------- //
   return addr;
 }
 
@@ -192,11 +196,34 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
                                  Object::kDataLenSize + object_id_len]);
   
   uint16_t object_len =  Object::kHeaderSize + data_len + kVanillaPtrObjectIDSize;
-  uint64_t addr = server.allocate_object(object_len); 
+  // uint64_t addr = server.allocate_object(object_len); 
   // uint64_t addr = alloc_fn(object_len);
-  uint8_t addr_len = static_cast<uint16_t>(sizeof(addr));
-  printf("obj_id = %lu, len = %u\n",*object_id,object_id_len);
-  printf("addr = %lu,len = %u\n",addr,addr_len);
+
+  // ----------------- allocate start -------------------------- //
+  while(alloc_occupied.test_and_set()){
+    // check is there any thread is using the allocator
+    // alloc_occupied_int == 1 means: allocator is occupied
+    // if alloc_occupied_int == 0 means: the allocator is free
+    thread_yield();
+  }
+
+  // --------------------------- area ------------------- //
+  requested_size_uint16.store(object_len);
+  req_ready_int.store(1);
+  
+  while(req_ready_int.load()){
+    // check is my allocation finished
+    // alloc_done_int == 1 means: allocation finished
+    // alloc_done_int == 0 means: allocation doing
+    // thread_yield();
+  }
+  uint64_t addr = allocated_addr_uint64.load();
+  // --------------------------- area ------------------- //
+  alloc_occupied.clear();
+  // ----------------- allocate end -------------------------- //
+
+  uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
+  printf("addr = %lu, object_len = %hu, data_len = %hu \n",addr,object_len,data_len);
 
   // server.write_object(ds_id, object_id_len, object_id, data_len, data_buf);
   auto *addr_ptr = reinterpret_cast<const uint8_t *>(&addr);
@@ -405,10 +432,9 @@ void nextgen_alloc_begin(){
       uint16_t size = requested_size_uint16.load();
       uint64_t addr = server.allocate_object(size);
       allocated_addr_uint64.store(addr);
-      alloc_done_int.store(1);
+      printf("allocating,this time is %lu\n",addr);
       req_ready_int.store(0);
       // allocation finished 
-      // alloc_occupied_int.store(0); // release allocator
     }
 }
 
@@ -421,6 +447,7 @@ void do_work(uint16_t port) {
   while (tcp_accept(q, &c) == 0) {
     if (has_shutdown) {
       master_thread = rt::Thread([c]() { master_fn(c); });
+      alloc_thread = rt::Thread([]() { nextgen_alloc_begin(); });
       has_shutdown = false;
     } else {
       slave_threads.emplace_back(rt::Thread([c]() { slave_fn(c); }));

@@ -269,14 +269,13 @@ uint64_t TCPDevice::_write_object(tcpconn_t *remote_slave, uint8_t ds_id,
   helpers::tcp_read_until(remote_slave, &ack, sizeof(ack));
 
   uint8_t resp[Object::kIDLenSize+Object::kMaxObjectIDSize];
-  helpers::tcp_read_until(remote_slave, resp, Object::kIDLenSize);
-  auto addr_len = *const_cast<uint8_t *>(&req[Object::kDSIDSize]);
+  helpers::tcp_read_until(remote_slave, &resp[0], Object::kIDLenSize);
+  auto addr_len = *const_cast<uint8_t *>(&resp[0]);
   uint64_t addr;
   if (addr_len) {
     helpers::tcp_read_until(remote_slave, &resp[Object::kIDLenSize], addr_len);
     auto *addr_ptr = const_cast<uint8_t *>(&resp[Object::kIDLenSize]);
     addr = *(reinterpret_cast<uint64_t *>(addr_ptr));
-    printf("addr = %d,   len = %d\n",addr,addr_len);
   }
 
   Stats::finish_measure_write_object_cycles();

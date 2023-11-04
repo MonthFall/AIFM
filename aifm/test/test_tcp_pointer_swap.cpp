@@ -42,8 +42,6 @@ void do_work(FarMemManager *manager) {
     vec.emplace_back(std::move(far_mem_ptr));
   }
 
-  printf("setup finished\n");
-
   for (uint64_t i = 0; i < kNumEntries; i++) {
     {
       DerefScope scope;

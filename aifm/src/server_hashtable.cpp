@@ -15,6 +15,10 @@ ServerHashTable::ServerHashTable(uint32_t param_len, uint8_t *params) {
 
 ServerHashTable::~ServerHashTable() {}
 
+uint64_t ServerHashTable::allocate_object(uint64_t obj_id,uint16_t object_size){
+  return obj_id;
+}
+
 void ServerHashTable::read_object(uint8_t obj_id_len, const uint8_t *obj_id,
                                   uint16_t *data_len, uint8_t *data_buf) {
 #ifdef HASHTABLE_EXCLUSIVE

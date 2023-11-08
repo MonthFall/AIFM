@@ -15,6 +15,7 @@ private:
 public:
   ServerHashTable(uint32_t param_len, uint8_t *params);
   ~ServerHashTable();
+  uint64_t allocate_object(uint64_t obj_id,uint16_t object_size);
   void read_object(uint8_t obj_id_len, const uint8_t *obj_id,
                    uint16_t *data_len, uint8_t *data_buf);
   void write_object(uint8_t obj_id_len, const uint8_t *obj_id,

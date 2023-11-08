@@ -5,6 +5,7 @@
 class ServerDS {
 public:
   virtual ~ServerDS() {}
+  virtual uint64_t allocate_object(uint64_t obj_id,uint16_t object_size) = 0;
   virtual void read_object(uint8_t obj_id_len, const uint8_t *obj_id,
                            uint16_t *data_len, uint8_t *data_buf) = 0;
   virtual void write_object(uint8_t obj_id_len, const uint8_t *obj_id,

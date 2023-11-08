@@ -12,7 +12,6 @@ extern "C" {
 #include "server.hpp"
 
 #include <atomic>
-//#include <stdatomic.h>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -31,6 +30,8 @@ std::atomic<int> alloc_occupied_int=0;
 std::atomic_flag alloc_occupied = ATOMIC_FLAG_INIT;
 std::atomic<int> req_ready_int=0;
 std::atomic<uint16_t> requested_size_uint16=0;
+std::atomic<uint8_t> requested_ds_id_uint8=0;
+std::atomic<uint64_t> requested_obj_id_uint64=0;
 std::atomic<uint64_t> allocated_addr_uint64=0;
 
 // std::atomic<int> free_done_int=0;
@@ -81,7 +82,6 @@ void process_init(tcpconn_t *c) {
   far_mem_size = reinterpret_cast<uint64_t *>(req);
   *far_mem_size = ((*far_mem_size - 1) / helpers::kHugepageSize + 1) *
                   helpers::kHugepageSize;
-  server.set_up_manager(*far_mem_size);
   auto far_mem_ptr =
       static_cast<uint8_t *>(helpers::allocate_hugepage(*far_mem_size));
   BUG_ON(far_mem_ptr == nullptr);
@@ -205,13 +205,15 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
 
   // --------------------------- area ------------------- //
   requested_size_uint16.store(object_len);
+  requested_ds_id_uint8.store(ds_id);
+  requested_obj_id_uint64.store(*(reinterpret_cast<uint64_t*>(object_id)));
   req_ready_int.store(1);
   
   while(req_ready_int.load()){
     // check is my allocation finished
     // req_ready_int == 0 means: allocation finished
     // req_ready_int == 1 means: allocation doing
-    // thread_yield();
+    thread_yield();
   }
   uint64_t addr = allocated_addr_uint64.load();
   // --------------------------- area ------------------- //
@@ -425,8 +427,9 @@ void nextgen_alloc_begin(){
     // check is any thread occupied allocator
     if (req_ready_int.load()) { 
       // if occupied, doing allocation
-      uint16_t size = requested_size_uint16.load();
-      uint64_t addr = server.allocate_object(size);
+      // uint16_t size = requested_size_uint16.load();
+
+      uint64_t addr = server.allocate_object(requested_ds_id_uint8.load(),requested_obj_id_uint64.load(),requested_size_uint16.load());
       allocated_addr_uint64.store(addr);
       req_ready_int.store(0);
       // allocation finished 

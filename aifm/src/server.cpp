@@ -19,11 +19,11 @@ Server::Server() {
   register_ds(kHashTableDSType, new ServerHashTableFactory());
   register_ds(kDataFrameVectorDSType, new ServerDataFrameVectorFactory());
 
-  // manager =  std::unique_ptr<RemoteManager>(new RemoteManager(FarMemSize));
-}
-
-void Server::set_up_manager(u_int64_t size){
-  manager =  std::unique_ptr<RemoteManager>(new RemoteManager(size));
+  for (uint8_t ds_id = std::numeric_limits<decltype(available_ds_ids_)::value_type>::min(); ds_id < std::numeric_limits<decltype(available_ds_ids_)::value_type>::max(); ds_id++) {
+      if (ds_id != kVanillaPtrDSID) {
+          available_ds_ids_.push(ds_id);
+      }
+  }   
 }
 
 void Server::register_ds(uint8_t ds_type, ServerDSFactory *factory) {
@@ -53,8 +53,12 @@ void Server::read_object(uint8_t ds_id, uint8_t obj_id_len,
   ds_ptr->read_object(obj_id_len, obj_id, data_len, data_buf);
 }
 
-uint64_t Server::allocate_object(uint16_t data_len){
-  return manager->allocate_remote_object(data_len);
+uint64_t Server::allocate_object(uint8_t ds_id,uint64_t obj_id,uint16_t data_len){
+  auto ds_ptr = server_ds_ptrs_[ds_id].get();
+  if (!ds_ptr) {
+    ds_ptr = server_ds_ptrs_[kVanillaPtrDSID].get();
+  }
+  return ds_ptr->allocate_object(obj_id,data_len);
 }
 
 void Server::write_object(uint8_t ds_id, uint8_t obj_id_len,
@@ -84,11 +88,13 @@ void Server::compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
 }
 
 uint8_t Server::allocate_ds_id(){
-  return manager->allocate_ds_id();
+  auto ds_id = available_ds_ids_.front();
+  available_ds_ids_.pop();
+  return ds_id;
 }
 
 void Server::free_ds_id(u_int8_t ds_id){
-  manager->free_ds_id(ds_id);
+  available_ds_ids_.push(ds_id);
 }
 
 ServerDS *Server::get_server_ds(uint8_t ds_id) {

@@ -16,7 +16,6 @@ FarMemDevice::FarMemDevice(uint64_t far_mem_size, uint32_t prefetch_win_size)
 
 FakeDevice::FakeDevice(uint64_t far_mem_size)
     : FarMemDevice(far_mem_size, kPrefetchWinSize), server_() {
-  server_.set_up_manager(far_mem_size);
   
   server_.construct(kVanillaPtrDSType, kVanillaPtrDSID, sizeof(far_mem_size),
                     reinterpret_cast<uint8_t *>(&far_mem_size));
@@ -34,7 +33,7 @@ uint64_t FakeDevice::write_object(uint8_t ds_id, uint8_t obj_id_len,
                               const uint8_t *obj_id, uint16_t data_len,
                               const uint8_t *data_buf) {
   uint16_t object_size = Object::kHeaderSize+data_len+kVanillaPtrObjectIDSize;
-  uint64_t addr = server_.allocate_object(object_size); 
+  uint64_t addr = server_.allocate_object(ds_id,*(reinterpret_cast<const uint64_t *>(obj_id)),object_size); 
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   auto *addr_ptr = reinterpret_cast<const uint8_t *> (&addr);
   //server_.write_object(ds_id, obj_id_len, obj_id, data_len, data_buf);

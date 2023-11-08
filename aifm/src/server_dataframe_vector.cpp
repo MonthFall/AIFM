@@ -21,6 +21,11 @@ template <typename T> ServerDataFrameVector<T>::ServerDataFrameVector() {}
 template <typename T> ServerDataFrameVector<T>::~ServerDataFrameVector() {}
 
 template <typename T>
+uint64_t ServerDataFrameVector<T>::allocate_object(uint64_t obj_id,uint16_t object_size){
+  return obj_id;
+}
+
+template <typename T>
 void ServerDataFrameVector<T>::read_object(uint8_t obj_id_len,
                                            const uint8_t *obj_id,
                                            uint16_t *data_len,

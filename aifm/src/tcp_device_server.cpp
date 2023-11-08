@@ -44,30 +44,26 @@ Server server;
 // std::vector<rt::Thread> alloc_threads[kMaxNumDSIDs];
 
 uint64_t alloc_fn(uint16_t object_size){
-  // ----------------- allocate start -------------------------- //
-  // while(alloc_occupied_int.compare_exchange_strong(expected,desired)){
+    // ----------------- allocate start -------------------------- //
   while(alloc_occupied.test_and_set()){
     // check is there any thread is using the allocator
-    // alloc_occupied_int == 1 means: allocator is occupied
-    // if alloc_occupied_int == 0 means: the allocator is free
+    // alloc_occupied == 1 means: allocator is occupied
+    // if alloc_occupied == 0 means: the allocator is free, set the alloc_occupied = 1
     thread_yield();
   }
-  // alloc_occupied_int.store(1); // set allocator occupied
 
   // --------------------------- area ------------------- //
   requested_size_uint16.store(object_size);
-  // alloc_done_int.store(0);  
   req_ready_int.store(1);
   
   while(req_ready_int.load()){
     // check is my allocation finished
-    // alloc_done_int == 1 means: allocation finished
-    // alloc_done_int == 0 means: allocation doing
+    // req_ready_int == 0 means: allocation finished
+    // req_ready_int == 1 means: allocation doing
     // thread_yield();
   }
   uint64_t addr = allocated_addr_uint64.load();
   // --------------------------- area ------------------- //
-  // alloc_occupied_int.store(0); // release allocator
   alloc_occupied.clear();
   // ----------------- allocate end -------------------------- //
   return addr;
@@ -202,8 +198,8 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
   // ----------------- allocate start -------------------------- //
   while(alloc_occupied.test_and_set()){
     // check is there any thread is using the allocator
-    // alloc_occupied_int == 1 means: allocator is occupied
-    // if alloc_occupied_int == 0 means: the allocator is free
+    // alloc_occupied == 1 means: allocator is occupied
+    // if alloc_occupied == 0 means: the allocator is free, set the alloc_occupied = 1
     thread_yield();
   }
 
@@ -213,8 +209,8 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
   
   while(req_ready_int.load()){
     // check is my allocation finished
-    // alloc_done_int == 1 means: allocation finished
-    // alloc_done_int == 0 means: allocation doing
+    // req_ready_int == 0 means: allocation finished
+    // req_ready_int == 1 means: allocation doing
     // thread_yield();
   }
   uint64_t addr = allocated_addr_uint64.load();
@@ -223,7 +219,7 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
   // ----------------- allocate end -------------------------- //
 
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
-  printf("addr = %lu, object_len = %hu, data_len = %hu \n",addr,object_len,data_len);
+  // printf("addr = %lu, object_len = %hu, data_len = %hu \n",addr,object_len,data_len);
 
   // server.write_object(ds_id, object_id_len, object_id, data_len, data_buf);
   auto *addr_ptr = reinterpret_cast<const uint8_t *>(&addr);
@@ -432,7 +428,6 @@ void nextgen_alloc_begin(){
       uint16_t size = requested_size_uint16.load();
       uint64_t addr = server.allocate_object(size);
       allocated_addr_uint64.store(addr);
-      printf("allocating,this time is %lu\n",addr);
       req_ready_int.store(0);
       // allocation finished 
     }

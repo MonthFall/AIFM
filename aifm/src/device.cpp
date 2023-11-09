@@ -156,10 +156,10 @@ void TCPDevice::compute(uint8_t ds_id, uint8_t opcode, uint16_t input_len,
 
 uint8_t TCPDevice::allocate_ds_id(){
   auto remote_slave = shared_pool_.pop();
-  u_int8_t *ds_id;
-  _allocate_ds_id(remote_slave,ds_id);
+  u_int8_t ds_id;
+  _allocate_ds_id(remote_slave,&ds_id);
   shared_pool_.push(remote_slave);
-  return *ds_id;
+  return ds_id;
 }
 
 void TCPDevice::free_ds_id(u_int8_t ds_id){

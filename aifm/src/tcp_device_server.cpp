@@ -352,7 +352,7 @@ void process_allocate_ds_id(tcpconn_t *c) {
   helpers::tcp_write_until(c, &ack, sizeof(ack));
 
   memcpy(&resp[0],&ds_id,Object::kDSIDSize);
-  helpers::tcp_write_until(c, &resp, sizeof(resp));
+  helpers::tcp_write_until(c, resp, sizeof(resp));
 }
 
 // Request:

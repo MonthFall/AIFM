@@ -222,10 +222,17 @@ restart:
     if (unlikely(meta() != meta_snapshot)) {
       goto restart;
     }
-    _flush(/* obj_locked = */ true);
+    // _flush(/* obj_locked = */ true);
+    uint64_t addr = *reinterpret_cast<const uint64_t *>(obj_id);
+    if (meta_snapshot.is_dirty()){
+      addr = FarMemManagerFactory::get()->get_device()->write_object(
+        obj.get_ds_id(), obj_id_len, obj_id, obj.get_data_len(),
+        reinterpret_cast<const uint8_t *>(obj.get_data_addr()));
+      meta().clear_dirty();
+    }
     auto ds_id = obj.get_ds_id();
     auto obj_size = obj.size();
-    meta().gc_wb(ds_id, obj_size, *reinterpret_cast<const uint64_t *>(obj_id));
+    meta().gc_wb(ds_id, obj_size, addr);
     obj.free();
   }
 }

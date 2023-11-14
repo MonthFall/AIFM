@@ -79,13 +79,13 @@ void process_init(tcpconn_t *c) {
   uint8_t req[sizeof(decltype(*far_mem_size))];
   helpers::tcp_read_until(c, req, sizeof(req));
 
-  far_mem_size = reinterpret_cast<uint64_t *>(req);
-  *far_mem_size = ((*far_mem_size - 1) / helpers::kHugepageSize + 1) *
-                  helpers::kHugepageSize;
-  auto far_mem_ptr =
-      static_cast<uint8_t *>(helpers::allocate_hugepage(*far_mem_size));
-  BUG_ON(far_mem_ptr == nullptr);
-  far_mem.reset(far_mem_ptr);
+  // far_mem_size = reinterpret_cast<uint64_t *>(req);
+  // *far_mem_size = ((*far_mem_size - 1) / helpers::kHugepageSize + 1) *
+  //                 helpers::kHugepageSize;
+  // auto far_mem_ptr =
+  //     static_cast<uint8_t *>(helpers::allocate_hugepage(*far_mem_size));
+  // BUG_ON(far_mem_ptr == nullptr);
+  // far_mem.reset(far_mem_ptr);
 
   barrier();
   uint8_t ack;
@@ -192,33 +192,33 @@ void process_write_object_rt_objectid(tcpconn_t *c) {
                                  Object::kDataLenSize + object_id_len]);
   
   uint16_t object_len =  Object::kHeaderSize + data_len + kVanillaPtrObjectIDSize;
-  // uint64_t addr = server.allocate_object(object_len); 
+  uint64_t addr = server.allocate_object(ds_id,*(reinterpret_cast<uint64_t*>(object_id)),object_len); 
   // uint64_t addr = alloc_fn(object_len);
 
-  // ----------------- allocate start -------------------------- //
-  while(alloc_occupied.test_and_set()){
-    // check is there any thread is using the allocator
-    // alloc_occupied == 1 means: allocator is occupied
-    // if alloc_occupied == 0 means: the allocator is free, set the alloc_occupied = 1
-    thread_yield();
-  }
+  // // ----------------- allocate start -------------------------- //
+  // while(alloc_occupied.test_and_set()){
+  //   // check is there any thread is using the allocator
+  //   // alloc_occupied == 1 means: allocator is occupied
+  //   // if alloc_occupied == 0 means: the allocator is free, set the alloc_occupied = 1
+  //   thread_yield();
+  // }
 
-  // --------------------------- area ------------------- //
-  requested_size_uint16.store(object_len);
-  requested_ds_id_uint8.store(ds_id);
-  requested_obj_id_uint64.store(*(reinterpret_cast<uint64_t*>(object_id)));
-  req_ready_int.store(1);
+  // // --------------------------- area ------------------- //
+  // requested_size_uint16.store(object_len);
+  // requested_ds_id_uint8.store(ds_id);
+  // requested_obj_id_uint64.store(*(reinterpret_cast<uint64_t*>(object_id)));
+  // req_ready_int.store(1);
   
-  while(req_ready_int.load()){
-    // check is my allocation finished
-    // req_ready_int == 0 means: allocation finished
-    // req_ready_int == 1 means: allocation doing
-    thread_yield();
-  }
-  uint64_t addr = allocated_addr_uint64.load();
-  // --------------------------- area ------------------- //
-  alloc_occupied.clear();
-  // ----------------- allocate end -------------------------- //
+  // while(req_ready_int.load()){
+  //   // check is my allocation finished
+  //   // req_ready_int == 0 means: allocation finished
+  //   // req_ready_int == 1 means: allocation doing
+  //   thread_yield();
+  // }
+  // uint64_t addr = allocated_addr_uint64.load();
+  // // --------------------------- area ------------------- //
+  // alloc_occupied.clear();
+  // // ----------------- allocate end -------------------------- //
 
   uint8_t addr_len = static_cast<uint8_t>(sizeof(addr));
   // printf("addr = %lu, object_len = %hu, data_len = %hu \n",addr,object_len,data_len);
@@ -445,7 +445,7 @@ void do_work(uint16_t port) {
   while (tcp_accept(q, &c) == 0) {
     if (has_shutdown) {
       master_thread = rt::Thread([c]() { master_fn(c); });
-      alloc_thread = rt::Thread([]() { nextgen_alloc_begin(); });
+      // alloc_thread = rt::Thread([]() { nextgen_alloc_begin(); });
       has_shutdown = false;
     } else {
       slave_threads.emplace_back(rt::Thread([c]() { slave_fn(c); }));

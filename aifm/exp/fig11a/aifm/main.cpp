@@ -19,14 +19,14 @@ extern "C" {
 #include <string>
 #include <unistd.h>
 
-constexpr uint64_t kCacheSize = 22432 * Region::kSize;
+constexpr uint64_t kCacheSize = 8192 * Region::kSize;
 constexpr uint64_t kFarMemSize = 20ULL << 30;
 constexpr uint64_t kNumGCThreads = 15;
 constexpr uint64_t kNumConnections = 600;
 constexpr uint64_t kUncompressedFileSize = 1000000000;
 constexpr uint64_t kUncompressedFileNumBlocks =
     ((kUncompressedFileSize - 1) / snappy::FileBlock::kSize) + 1;
-constexpr uint32_t kNumUncompressedFiles = 16;
+constexpr uint32_t kNumUncompressedFiles = 8;
 constexpr bool kUseTpAPI = false;
 
 using namespace std;
@@ -88,7 +88,7 @@ void read_files_to_fm_array(const string &in_file_path) {
   }
 
   // Flush the cache to ensure there's no pending dirty data.
-  flush_cache();
+  // flush_cache();
 
   close(fd);
 }

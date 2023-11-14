@@ -21,7 +21,7 @@ extern "C" {
 using namespace std;
 
 constexpr uint32_t kUncompressedFileSize = 1000000000;
-constexpr uint32_t kNumUncompressedFiles = 16;
+constexpr uint32_t kNumUncompressedFiles = 8;
 void *buffers[kNumUncompressedFiles - 1];
 
 string read_file_to_string(const string &file_path) {
@@ -55,7 +55,8 @@ void compress_files_bench(const string &in_file_path,
   string out_str;
 
   for (uint32_t i = 0; i < kNumUncompressedFiles - 1; i++) {
-    buffers[i] = numa_alloc_onnode(kUncompressedFileSize, 1);
+    // buffers[i] = numa_alloc_onnode(kUncompressedFileSize, 1);
+    buffers[i] = malloc(kUncompressedFileSize);
     if (buffers[i] == nullptr) {
       helpers::dump_core();
     }

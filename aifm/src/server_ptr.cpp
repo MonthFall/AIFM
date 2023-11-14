@@ -73,6 +73,11 @@ void ServerPtr::compute(uint8_t opcode, uint16_t input_len,
 
 void ServerPtr::mutator_wait_for_gc_far_mem() {
     LOG_PRINTF("%s\n", "Warn: GCing far mem has not been implemented yet.");
+    Region region;
+    for(int i = 0;i<1000;i++){
+      region = *(far_mem_region_manager_.pop_used_region());
+      far_mem_region_manager_.push_free_region(region);
+    }
 }
 
 ServerDS *ServerPtrFactory::build(uint32_t param_len, uint8_t *params) {

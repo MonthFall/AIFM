@@ -10,7 +10,7 @@ constexpr static uint8_t kMaxNumDSTypes = 255;
 
 // Vanilla ptr.
 constexpr static uint8_t kVanillaPtrDSType = 0;
-constexpr static uint8_t kVanillaPtrDSID = 0; // Reserve 0 as its fixed DS ID.
+constexpr static uint8_t kVanillaPtrDSID = 1; // Reserve 0 as its fixed DS ID.
 constexpr static uint32_t kVanillaPtrObjectIDSize =
     sizeof(uint64_t); // Its object ID is always the remote object addr.
 

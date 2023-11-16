@@ -73,13 +73,13 @@ TCPDevice::TCPDevice(netaddr raddr, uint32_t num_connections,
       shared_pool_(num_connections) {
   // Initialize the master connection.
   netaddr laddr = {.ip = MAKE_IP_ADDR(0, 0, 0, 0), .port = 0};
-  BUG_ON(tcp_dial(laddr, raddr, &remote_master_) != 0);
-  char req[kOpcodeSize + sizeof(far_mem_size)];
-  __builtin_memcpy(req, &kOpInit, kOpcodeSize);
-  __builtin_memcpy(req + kOpcodeSize, &far_mem_size, sizeof(far_mem_size));
-  helpers::tcp_write_until(remote_master_, req, sizeof(req));
-  uint8_t ack;
-  helpers::tcp_read_until(remote_master_, &ack, sizeof(ack));
+  // BUG_ON(tcp_dial(laddr, raddr, &remote_master_) != 0);
+  // char req[kOpcodeSize + sizeof(far_mem_size)];
+  // __builtin_memcpy(req, &kOpInit, kOpcodeSize);
+  // __builtin_memcpy(req + kOpcodeSize, &far_mem_size, sizeof(far_mem_size));
+  // helpers::tcp_write_until(remote_master_, req, sizeof(req));
+  // uint8_t ack;
+  // helpers::tcp_read_until(remote_master_, &ack, sizeof(ack));
 
   // Initialize slave connections.
   tcpconn_t *remote_slave;

@@ -403,7 +403,8 @@ void slave_fn(tcpconn_t *c) {
       process_free_ds_id(c);
       break;
     default:
-      BUG();
+      // BUG();
+      printf("bug\n");
     }
   }
   tcp_close(c);
